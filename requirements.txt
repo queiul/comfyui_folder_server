@@ -1,0 +1,6 @@
+# comfyui_folder_server/requirements.txt
+watchdog>=3.0.0
+Pillow>=9.0.0
+moviepy>=1.0.3
+trimesh>=3.9.0 
+aiofiles>=23.1.0

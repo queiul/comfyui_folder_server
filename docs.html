@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Folder Server API Documentation (ComfyUI Addon)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        h2 {
+            color: #555;
+            margin-top: 30px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+
+        h3 {
+            color: #666;
+            margin-top: 20px;
+        }
+
+        h4 {
+            color: #777;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #eee;
+            font-size: 0.9em;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .endpoint {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #fafafa;
+            border: 1px solid #e7e7e7;
+            border-radius: 5px;
+        }
+
+        .method {
+            font-weight: bold;
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            color: white;
+            margin-right: 10px;
+        }
+
+        .get {
+            background-color: #007bff;
+        }
+
+        .post {
+            background-color: #28a745;
+        }
+
+        .delete {
+            background-color: #dc3545;
+        }
+
+        .url {
+            color: #0066cc;
+            font-family: monospace;
+        }
+
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .param-table th,
+        .param-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .param-table th {
+            background-color: #f8f8f8;
+        }
+
+        .notes {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffeeba;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 0.95em;
+        }
+
+        .limitations {
+            background-color: #f8d7da;
+            border-left: 4px solid #f5c6cb;
+            padding: 10px;
+            margin-top: 15px;
+        }
+
+        .future {
+            background-color: #d4edda;
+            border-left: 4px solid #c3e6cb;
+            padding: 10px;
+            margin-top: 15px;
+        }
+
+        .test-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 1px solid #e7e7e7;
+            border-radius: 5px;
+        }
+
+        .test-output {
+            height: 250px;
+            overflow-y: auto;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 10px;
+            font-family: monospace;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .test-output div {
+            padding: 2px 0;
+        }
+
+        .test-output .info {
+            color: #569cd6;
+        }
+
+        .test-output .error {
+            color: #f44747;
+        }
+
+        .test-output .success {
+            color: #6a9955;
+        }
+
+        .test-output .sent {
+            color: #ce9178;
+        }
+
+        .test-output .received {
+            color: #4ec9b0;
+        }
+
+        button {
+            padding: 8px 15px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        button:hover {
+            background: #0055aa;
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        select,
+        input {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin-right: 5px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>Folder Server API Documentation (ComfyUI Addon)</h1>
+    <p>This API provides access to files within ComfyUI's <code>input</code> and <code>output</code> directories. It is
+        served by the <code>comfyui_folder_server</code> custom node addon.</p>
+    <p>Base URL Path: <code>/folder_server</code></p>
+    <div class="notes">
+        <strong>Dependencies:</strong> This addon requires <code>watchdog</code>, <code>Pillow</code>,
+        <code>moviepy</code>, <code>trimesh</code>, and <code>aiofiles</code>. It will attempt to automatically install
+        them using pip if missing during startup. Manual installation might be required if auto-install fails.
+    </div>
+
+    <div class="endpoint">
+        <h2>REST API Endpoints</h2>
+
+        <h3>List Folder Contents</h3>
+        <p><span class="method get">GET</span> <span class="url">/folder_server/list/{folder_type}</span></p>
+        <p>Lists files and directories within the specified <code>folder_type</code> ("input" or "output"). Supports
+            subfolders, sorting, pagination, and various filtering options. Uses a short-lived server-side cache for
+            performance.</p>
+
+        <h4>Path Parameters</h4>
+        <table class="param-table">
+            <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><code>folder_type</code></td>
+                <td>string</td>
+                <td>Required. The base folder to list: "input" or "output".</td>
+            </tr>
+        </table>
+
+        <h4>Query Parameters</h4>
+        <table class="param-table">
+            <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Default</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><code>subfolder</code></td>
+                <td>string</td>
+                <td>(none)</td>
+                <td>Path relative to the <code>folder_type</code> base directory (e.g., "images/landscapes").</td>
+            </tr>
+            <tr>
+                <td><code>sort_by</code></td>
+                <td>string</td>
+                <td>"name"</td>
+                <td>Field to sort by. Options: "name", "size", "modified", "created", "width", "height", "duration",
+                    "depth", "vertices", "faces". (Invalid/missing fields default to "name").</td>
+            </tr>
+            <tr>
+                <td><code>sort_order</code></td>
+                <td>string</td>
+                <td>"asc"</td>
+                <td>Sort direction. Options: "asc", "desc".</td>
+            </tr>
+            <tr>
+                <td><code>page</code></td>
+                <td>integer</td>
+                <td>1</td>
+                <td>Page number for pagination (starts at 1).</td>
+            </tr>
+            <tr>
+                <td><code>limit</code></td>
+                <td>integer</td>
+                <td>100</td>
+                <td>Number of items per page. Set to 0 for no limit (returns all items).</td>
+            </tr>
+            <tr>
+                <td><code>refresh</code></td>
+                <td>boolean</td>
+                <td>"false"</td>
+                <td>Set to "true" to bypass the server-side directory listing cache for this request.</td>
+            </tr>
+            <tr>
+                <td><code>dirs_only</code></td>
+                <td>boolean</td>
+                <td>"false"</td>
+                <td>Set to "true" to only list directories.</td>
+            </tr>
+            <tr>
+                <td><code>files_only</code></td>
+                <td>boolean</td>
+                <td>"false"</td>
+                <td>Set to "true" to only list files.</td>
+            </tr>
+            <tr>
+                <td><code>extensions</code></td>
+                <td>string</td>
+                <td>(none)</td>
+                <td>Comma-separated list of file extensions to include (case-insensitive, e.g., "jpg,png,gif"). Applies
+                    only if
+                    <code>files_only</code> is true or <code>dirs_only</code> is false.
+                </td>
+            </tr>
+            <tr>
+                <td><code>exclude_extensions</code></td>
+                <td>string</td>
+                <td>(none)</td>
+                <td>Comma-separated list of file extensions to exclude (case-insensitive, e.g., "tmp,bak"). Takes
+                    precedence over
+                    <code>extensions</code>.
+                </td>
+            </tr>
+            <tr>
+                <td><code>filter</code></td>
+                <td>string</td>
+                <td>(none)</td>
+                <td>Case-insensitive text filter applied to filenames.</td>
+            </tr>
+        </table>
+
+        <h4>File Metadata & Dimensions</h4>
+        <p>Each item in the <code>files</code> array includes standard metadata:</p>
+        <ul>
+            <li><code>name</code>: File or directory name.</li>
+            <li><code>path</code>: Full path relative to the ComfyUI base (e.g., "output/images/image1.png").</li>
+            <li><code>is_dir</code>: Boolean indicating if the item is a directory.</li>
+            <li><code>size</code>: Size in bytes (0 for directories).</li>
+            <li><code>modified</code>: Last modified timestamp (Unix epoch).</li>
+            <li><code>created</code>: Creation timestamp (Unix epoch, platform dependent).</li>
+        </ul>
+        <p>Additionally, dimension/metadata information is automatically included for supported file types (if the
+            respective libraries are installed and functional):</p>
+        <ul>
+            <li><strong>Images</strong> (.jpg, .jpeg, .png, .gif, .bmp, .webp - requires Pillow):
+                <ul>
+                    <li><code>width</code>: Image width in pixels.</li>
+                    <li><code>height</code>: Image height in pixels.</li>
+                </ul>
+            </li>
+            <li><strong>Videos</strong> (.mp4, .avi, .mov, .mkv, .webm, .flv, .wmv - requires moviepy):
+                <ul>
+                    <li><code>width</code>: Video width in pixels.</li>
+                    <li><code>height</code>: Video height in pixels.</li>
+                    <li><code>duration</code>: Video duration in seconds.</li>
+                </ul>
+            </li>
+            <li><strong>3D Models</strong> (.obj, .stl, .ply, .glb, .gltf, .fbx, .dae, .3ds - requires trimesh):
+                <ul>
+                    <li><code>width</code>: Model bounding box width (X-axis).</li>
+                    <li><code>height</code>: Model bounding box height (Y-axis).</li>
+                    <li><code>depth</code>: Model bounding box depth (Z-axis).</li>
+                    <li><code>vertices</code>: Number of vertices (if available).</li>
+                    <li><code>faces</code>: Number of faces (if available).</li>
+                </ul>
+            </li>
+        </ul>
+        <p>If metadata cannot be extracted (e.g., unsupported format, corrupted file, missing library, library error),
+            the corresponding fields will be omitted.</p>
+
+        <h4>Example Response</h4>
+        <pre>
+{
+"files": [
+{
+"name": "render_01.png",
+"path": "output/renders/render_01.png",
+"is_dir": false,
+"size": 123456,
+"modified": 1678886400.123,
+"created": 1678886300.456,
+"width": 1024,
+"height": 1024
+},
+{
+"name": "intro.mp4",
+"path": "input/videos/intro.mp4",
+"is_dir": false,
+"size": 5678900,
+"modified": 1678886500.789,
+"created": 1678886450.000,
+"width": 1920,
+"height": 1080,
+"duration": 15.5
+},
+{
+"name": "model.glb",
+"path": "input/models/3d/model.glb",
+"is_dir": false,
+"size": 234567,
+"modified": 1678886600.111,
+"created": 1678886550.222,
+"width": 10.5,
+"height": 15.2,
+"depth": 8.7,
+"vertices": 25000,
+"faces": 48000
+},
+{
+"name": "archive",
+"path": "output/archive",
+"is_dir": true,
+"size": 0,
+"modified": 1678886700.333,
+"created": 1678886700.333
+}
+// ... other files/dirs
+],
+"pagination": {
+"total": 56,
+"page": 1,
+"limit": 100,
+"total_pages": 1
+},
+"sort": {
+"field": "duration",
+"order": "desc"
+},
+"filters_applied": {
+"dirs_only": false,
+"files_only": true,
+"extensions": ["png", "mp4", "glb"],
+"exclude_extensions": null,
+"filename_filter": null
+}
+}
+</pre>
+    </div>
+
+    <div class="endpoint">
+        <h3>Get File</h3>
+        <p><span class="method get">GET</span> <span class="url">/folder_server/file/{folder_type}/{file_path:.*}</span>
+        </p>
+        <p>s the specified file. The <code>file_path</code> should be relative to the <code>folder_type</code>
+            base directory and can contain slashes.</p>
+        <p>Uses efficient streaming via <code>aiohttp.web.FileResponse</code>.</p>
+        <h4>Path Parameters</h4>
+        <table class="param-table">
+            <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><code>folder_type</code></td>
+                <td>string</td>
+                <td>Required. "input" or "output".</td>
+            </tr>
+            <tr>
+                <td><code>file_path</code></td>
+                <td>string</td>
+                <td>Required. Relative path to the file within the folder type (e.g., "models/model.safetensors" or
+                    "results/image.png").</td>
+            </tr>
+        </table>
+        <p>Returns the raw file content with appropriate `Content-Type` header.</p>
+        <div class="notes">Returns 404 if not found, 400 if path is a directory or invalid, 403 on permission errors.
+        </div>
+    </div>
+
+    <div class="endpoint">
+        <h3>Upload File</h3>
+        <p><span class="method post">POST</span> <span class="url">/folder_server/upload/{folder_type}</span></p>
+        <p>Uploads a file to the specified folder (or subfolder) using <code>multipart/form-data</code>.</p>
+        <h4>Path Parameters</h4>
+        <table class="param-table">
+            <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><code>folder_type</code></td>
+                <td>string</td>
+                <td>Required. "input" or "output".</td>
+            </tr>
+        </table>
+        <h4>Request Body (multipart/form-data)</h4>
+        <table class="param-table">
+            <tr>
+                <th>Field Name</th>
+                <th>Type</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><code>file</code></td>
+                <td>File</td>
+                <td>Required. The file content to upload.</td>
+            </tr>
+            <tr>
+                <td><code>subfolder</code></td>
+                <td>string</td>
+                <td>Optional. Relative path within the <code>folder_type</code> where the file should be saved. Parent
+                    directories will be created if they don't exist.</td>
+            </tr>
+        </table>
+        <div class="notes">Uses <code>aiofiles</code> for efficient async writing. Uploads are performed atomically
+            (written to a temporary <code>.uploading</code> file, then renamed).</div>
+        <h4>Example Response (Success: 201 Created)</h4>
+        <pre>
+{
+"message": "File uploaded successfully",
+"file": {
+"name": "new_model.obj",
+"path": "input/uploads/new_model.obj",
+"is_dir": false,
+"size": 543210,
+"modified": 1678887000.111,
+"created": 1678887000.111,
+"width": 5.0,
+"height": 8.0,
+"depth": 3.0,
+"vertices": 10000,
+"faces": 19000
+}
+}
+</pre>
+        <div class="notes">Returns 400 for missing 'file' field or invalid parameters, 403 on permission errors, 500 on
+            upload errors.</div>
+    </div>
+
+    <div class="endpoint">
+        <h3>Delete File or Directory</h3>
+        <p><span class="method delete">DELETE</span> <span
+                class="url">/folder_server/file/{folder_type}/{path:.*}</span></p>
+        <p>Deletes a file or an entire directory (recursively) from the specified folder.</p>
+        <h4>Path Parameters</h4>
+        <table class="param-table">
+            <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><code>folder_type</code></td>
+                <td>string</td>
+                <td>Required. "input" or "output".</td>
+            </tr>
+            <tr>
+                <td><code>path</code></td>
+                <td>string</td>
+                <td>Required. Relative path to the file or directory to delete.</td>
+            </tr>
+        </table>
+        <h4>Example Response (Success: 200 OK)</h4>
+        <pre>{"message": "File deleted successfully."}</pre>
+        <pre>{"message": "Directory deleted successfully."}</pre>
+        <div class="notes">Returns 404 if the path does not exist, 400 for invalid path, 403 on permission errors, 500
+            on OS errors during deletion.</div>
+    </div>
+
+    <div class="endpoint">
+        <h3>Create Directory</h3>
+        <p><span class="method post">POST</span> <span class="url">/folder_server/create_dir/{folder_type}</span></p>
+        <p>Creates a new directory, including any necessary parent directories.</p>
+        <h4>Path Parameters</h4>
+        <table class="param-table">
+            <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><code>folder_type</code></td>
+                <td>string</td>
+                <td>Required. "input" or "output".</td>
+            </tr>
+        </table>
+        <h4>Request Body (application/json)</h4>
+        <pre>{"path": "relative/path/to/new_directory"}</pre>
+        <h4>Example Response (Success: 201 Created)</h4>
+        <pre>
+{
+"message": "Directory created successfully.",
+"directory": {
+"name": "new_directory",
+"path": "output/data/new_directory",
+"is_dir": true,
+"size": 0,
+"modified": 1678887200.222,
+"created": 1678887200.222
+}
+}
+</pre>
+        <div class="notes">Returns 200 OK with directory metadata if the directory already exists. Returns 409 Conflict
+            if a file exists at the path. Returns 400 for invalid JSON or missing 'path', 403 on permission errors.
+        </div>
+    </div>
+
+    <div class="endpoint">
+        <h3>Move / Rename File or Directory</h3>
+        <p><span class="method post">POST</span> <span class="url">/folder_server/move</span></p>
+        <p>Moves or renames a file or directory. Can move between "input" and "output" folders.</p>
+        <h4>Request Body (application/json)</h4>
+        <p>Paths must be specified including the folder type prefix.</p>
+        <pre>
+{
+"source": "input/path/to/source_file_or_dir",
+"destination": "output/new/path/to/destination"
+}
+</pre>
+        <h4>Example Response (Success: 200 OK)</h4>
+        <pre>
+{
+"message": "Move/Rename successful.",
+"destination": { // Metadata of the item at the new location
+"name": "destination",
+"path": "output/new/path/to/destination",
+"is_dir": false, // or true
+"size": 12345,
+"modified": 1678887300.333, // Modification time usually preserved by move
+"created": 1678887100.444, // Creation time is preserved
+// Dimension fields included if applicable (e.g., width, height)
+}
+}
+</pre>
+        <div class="notes">
+            Handles both files and directories. Creates parent directories for the destination if needed. Uses
+            <code>shutil.move</code>.
+            <span class="limitations"><strong>Limitation:</strong> Currently does <strong>not</strong> overwrite
+                existing files or directories at the destination path (returns 409 Conflict), except for simple case
+                changes in the filename on case-insensitive filesystems.</span>
+            Returns 404 if source not found, 400 for invalid path format or missing fields, 403 on permission errors,
+            500 on move errors.
+        </div>
+    </div>
+
+    <div class="endpoint">
+        <h3>Copy File or Directory</h3>
+        <p><span class="method post">POST</span> <span class="url">/folder_server/copy</span></p>
+        <p>Copies a file or directory (recursively). Can copy between "input" and "output" folders.</p>
+        <h4>Request Body (application/json)</h4>
+        <p>Paths must be specified including the folder type prefix.</p>
+        <pre>
+{
+"source": "input/templates/template.txt",
+"destination": "output/projects/new_project.txt"
+}
+</pre>
+        <h4>Example Response (Success: 200 OK)</h4>
+        <pre>
+{
+"message": "Copy successful.",
+"destination": { // Metadata of the item at the new location
+"name": "new_project.txt",
+"path": "output/projects/new_project.txt",
+"is_dir": false,
+"size": 5678,
+"modified": 1678887400.555, // Modification time usually preserved by copy2
+"created": 1678887400.555, // Creation time reflects copy time
+// No dimension info for txt files
+}
+}
+</pre>
+        <div class="notes">
+            Uses <code>shutil.copy2</code> for files (preserving metadata where possible) and
+            <code>shutil.copytree</code> for directories. Creates parent directories for the destination if needed.
+            <span class="limitations"><strong>Limitation:</strong> Currently does <strong>not</strong> overwrite
+                existing files or directories at the destination path (returns 409 Conflict).</span>
+            Returns 404 if source not found, 400 for invalid path format or missing fields, 403 on permission errors,
+            409 if destination exists, 500 on copy errors.
+        </div>
+    </div>
+
+    <div class="endpoint">
+        <h3>Get Documentation</h3>
+        <p><span class="method get">GET</span> <span class="url">/folder_server/docs</span></p>
+        <p>Retrieves this HTML documentation file.</p>
+    </div>
+
+
+    <h2>WebSocket API for File Change Notifications</h2>
+    <p>Connect to the WebSocket endpoint for real-time notifications of file system changes within the watched
+        <code>input</code> and <code>output</code> folders.
+    </p>
+    <p>Endpoint URL: <span class="url">ws://{your_comfyui_host}:{port}/ws/folder_server</span> (e.g.,
+        <code>ws://localhost:8188/ws/folder_server</code>)
+    </p>
+
+    <h3>WebSocket Messages</h3>
+
+    <h4>Client to Server:</h4>
+    <ul>
+        <li>
+            <strong>Subscribe to a folder type:</strong>
+            <pre>{"action": "subscribe", "folder_type": "input" /* or "output" */}</pre>
+            <p>Server Response: <code>{"action": "subscribe_success", "folder_type": "input"}</code></p>
+        </li>
+        <li>
+            <strong>Unsubscribe from a folder type:</strong>
+            <pre>{"action": "unsubscribe", "folder_type": "input" /* or "output" */}</pre>
+            <p>Server Response: <code>{"action": "unsubscribe_success", "folder_type": "input"}</code></p>
+        </li>
+    </ul>
+
+    <h4>Server to Client (Event Notifications):</h4>
+    <p>Clients receive JSON messages when relevant file system events occur in folders they are subscribed to. Standard
+        fields included:</p>
+    <ul>
+        <li><code>action</code>: Event type (e.g., "file_created", "directory_moved").</li>
+        <li><code>folder_type</code>: "input" or "output" (Primary folder where the event occurred; source for
+            moves/deletes).</li>
+        <li><code>path</code>: Relative path of the source item (e.g., "input/images/cat.png"). For move events, this is
+            the <strong>source</strong> path.</li>
+        <li><code>is_directory</code>: Boolean flag.</li>
+        <li><code>timestamp</code>: Unix epoch timestamp of when the event was detected.</li>
+        <li><code>destination_folder_type</code>: (Only for "file_moved", "directory_moved") Destination folder type
+            ("input" or "output").</li>
+        <li><code>destination_path</code>: (Only for "file_moved", "directory_moved") Relative destination path (e.g.,
+            "output/processed/cat.png").</li>
+    </ul>
+    <div class="notes">
+        <strong>Note on Event Details:</strong> Currently, detailed metadata (like size or dimensions) is
+        <strong>not</strong> included in WebSocket event payloads. This is to keep notifications lightweight and avoid
+        potential delays or errors from fetching metadata synchronously during event handling. Clients needing updated
+        details after receiving an event should re-query the folder listing using the <code>/list</code> endpoint
+        (potentially with <code>refresh=true</code>).
+    </div>
+
+    <h4>Example Event Payloads:</h4>
+    <pre>
+// Example: File Created
+{
+"action": "file_created",
+"folder_type": "output",
+"path": "output/results/new_render_001.png",
+"is_directory": false,
+"timestamp": 1678888000.123
+}
+
+// Example: Directory Moved
+{
+"action": "directory_moved",
+"folder_type": "input", // Source folder
+"path": "input/staging", // Source path
+"is_directory": true,
+"timestamp": 1678888300.999,
+"destination_folder_type": "input",
+"destination_path": "input/processed_dirs/staging"
+}
+
+// Example: File Modified
+{
+"action": "file_modified",
+"folder_type": "input",
+"path": "input/prompts.txt",
+"is_directory": false,
+"timestamp": 1678888100.456
+}</pre>
+
+    <div class="test-section">
+        <h2>WebSocket Test Console</h2>
+        <div>
+            <label for="folderType">Folder:</label>
+            <select id="folderType">
+                <option value="input">input</option>
+                <option value="output">output</option>
+            </select>
+            <button id="connectBtn">Connect</button>
+            <button id="disconnectBtn" disabled>Disconnect</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <button id="subscribeBtn" disabled>Subscribe</button>
+            <button id="unsubscribeBtn" disabled>Unsubscribe</button>
+            <button id="clearLogBtn">Clear Log</button>
+        </div>
+        <h3>Event Log:</h3>
+        <div id="output" class="test-output"></div>
+
+        <!-- WebSocket Test Script remains the same -->
+        <script>
+            let ws = null;
+            const output = document.getElementById('output');
+            const folderSelect = document.getElementById('folderType');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const subscribeBtn = document.getElementById('subscribeBtn');
+            const unsubscribeBtn = document.getElementById('unsubscribeBtn');
+            const clearLogBtn = document.getElementById('clearLogBtn');
+
+            function log(message, type = 'info') {
+                const msgElement = document.createElement('div');
+                msgElement.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                msgElement.classList.add(type);
+                output.appendChild(msgElement);
+                output.scrollTop = output.scrollHeight;
+            }
+
+            clearLogBtn.addEventListener('click', () => {
+                output.innerHTML = '';
+            });
+
+            connectBtn.addEventListener('click', () => {
+                if (ws) {
+                    log('Already connected', 'error');
+                    return;
+                }
+
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws/folder_server`;
+
+                log(`Connecting to ${wsUrl}...`, 'info');
+                try {
+                    ws = new WebSocket(wsUrl);
+                } catch (error) {
+                    log(`Connection failed: ${error}`, 'error');
+                    return;
+                }
+
+
+                ws.onopen = () => {
+                    log('Connected!', 'success');
+                    connectBtn.disabled = true;
+                    disconnectBtn.disabled = false;
+                    subscribeBtn.disabled = false;
+                    unsubscribeBtn.disabled = false;
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        // Check for specific success messages from the updated code
+                        if (data.action === 'subscribe_success') {
+                            log(`Successfully subscribed to: ${data.folder_type}`, 'success');
+                        } else if (data.action === 'unsubscribe_success') {
+                            log(`Successfully unsubscribed from: ${data.folder_type}`, 'success');
+                        } else {
+                            log('Received: ' + JSON.stringify(data, null, 2), 'received');
+                        }
+                    } catch (e) {
+                        log('Received raw: ' + event.data, 'received');
+                    }
+                };
+
+                ws.onclose = (event) => {
+                    log(`Disconnected. Code: ${event.code}, Reason: ${event.reason || 'N/A'}`, 'info');
+                    ws = null;
+                    connectBtn.disabled = false;
+                    disconnectBtn.disabled = true;
+                    subscribeBtn.disabled = true;
+                    unsubscribeBtn.disabled = true;
+                };
+
+                ws.onerror = (error) => {
+                    log('WebSocket Error: ' + (error.message || 'Unknown error'), 'error');
+                    // Ensure cleanup happens even on error before open
+                    if (ws && ws.readyState !== WebSocket.OPEN) {
+                        ws.close(); // Attempt to close if not open
+                        ws = null;
+                        connectBtn.disabled = false;
+                        disconnectBtn.disabled = true;
+                        subscribeBtn.disabled = true;
+                        unsubscribeBtn.disabled = true;
+                    }
+                };
+            });
+
+            disconnectBtn.addEventListener('click', () => {
+                if (ws) {
+                    log('Disconnecting...', 'info');
+                    ws.close();
+                }
+            });
+
+            function sendWsMessage(message) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    const msgString = JSON.stringify(message);
+                    ws.send(msgString);
+                    log('Sent: ' + msgString, 'sent');
+                } else {
+                    log('WebSocket not connected', 'error');
+                }
+            }
+
+            subscribeBtn.addEventListener('click', () => {
+                const folder = folderSelect.value;
+                sendWsMessage({ action: 'subscribe', folder_type: folder });
+            });
+
+            unsubscribeBtn.addEventListener('click', () => {
+                const folder = folderSelect.value;
+                sendWsMessage({ action: 'unsubscribe', folder_type: folder });
+            });
+        </script>
+    </div>
+
+    <h2>Current Limitations & Shortcomings</h2>
+    <div class="limitations">
+        <ul>
+            <li><strong>No Overwrite Option:</strong> The <code>/move</code> and <code>/copy</code> endpoints currently
+                return a 409 Conflict error if the destination path already exists. There is no option to force an
+                overwrite.</li>
+            <li><strong>Basic WebSocket Events:</strong> WebSocket notifications currently do not include detailed file
+                metadata (size, dimensions, etc.). Clients must re-query the <code>/list</code> endpoint if updated
+                details are needed post-event.</li>
+            <li><strong>Metadata Extraction Errors:</strong> Metadata extraction for video/3D models relies on external
+                libraries (<code>moviepy</code>, <code>trimesh</code>) and may fail silently or log errors for specific
+                files or unsupported formats. Missing libraries disable the respective extraction.</li>
+            <li><strong>Cache Invalidation Granularity:</strong> Cache invalidation happens at the directory level upon
+                detected changes. Very frequent changes in large directories might theoretically lead to brief
+                inconsistencies if a read happens immediately after a change but before the invalidation/re-cache
+                completes.</li>
+            <li><strong>Dependency Management:</strong> While an auto-install attempt is made, failures might require
+                manual pip installation. Complex dependency conflicts (especially for <code>trimesh</code>) are
+                possible.</li>
+        </ul>
+    </div>
+
+    <h2>Planned Features & Improvements</h2>
+    <div class="future">
+        <ul>
+            <li><strong>Overwrite Option:</strong> Add an optional boolean parameter (e.g., <code>overwrite=true</code>)
+                to the <code>/move</code> and <code>/copy</code> endpoints.</li>
+            <li><strong>Improve Metadata Reliability:</strong> Enhance error handling and reporting for metadata
+                extraction failures. Consider alternative libraries if needed.</li>
+            <li><strong>Detailed WebSocket Events (Optional):</strong> Consider adding an option (perhaps during
+                subscription) to request detailed metadata within WebSocket event payloads, potentially with async
+                fetching.</li>
+            <li><strong>Thumbnail Generation:</strong> Add an endpoint to generate or retrieve thumbnails for
+                image/video files.</li>
+            <li><strong>Archive Operations:</strong> Add endpoints for creating/extracting ZIP archives.</li>
+            <li><strong>Configuration:</strong> Allow configuration of cache parameters (timeout, size) via a ComfyUI
+                setting or config file.</li>
+            <li><strong>Enhanced Filtering/Search:</strong> More advanced filtering (e.g., date ranges) or basic
+                recursive search capabilities.</li>
+        </ul>
+    </div>
+</body>
+
+</html>
