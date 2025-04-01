@@ -40,7 +40,7 @@ itself.
    inside your `ComfyUI/custom_nodes/` folder.
    ```bash
    cd ComfyUI/custom_nodes/
-   git clone <your_repository_url> comfyui_folder_server
+   git clone https://github.com/queiul/comfyui_folder_server comfyui_folder_server
    # OR download the ZIP and extract it here
    ```
 2. **Install Dependencies:** The addon will attempt to install dependencies
@@ -121,4 +121,4 @@ need to install them manually using the `requirements.txt` file.
 ## Contributing / Issues
 
 Please report any bugs, issues, or feature requests via the GitHub repository's
-[Issues](<your_repository_url>/issues) page (if applicable).
+[Issues](https://github.com/queiul/comfyui_folder_server/issues) page.
