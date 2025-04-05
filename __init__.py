@@ -9,8 +9,34 @@ import logging
 import atexit
 import threading # Import threading for the init lock
 
-# --- Dependency Checks --- (Keep this part as is)
-# ... (dependency check and install code) ...
+# --- Dependency Checks ---
+def install_package(package_name, version_spec=""):
+    """Installs a package using pip."""
+    print(f"[Folder Server] Installing {package_name}...")
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", f"{package_name}{version_spec}"])
+        print(f"[Folder Server] Successfully installed {package_name}.")
+    except subprocess.CalledProcessError as e:
+        print(f"[Folder Server] ERROR: Failed to install {package_name}. Please install it manually.")
+        print(e)
+    except Exception as e:
+        print(f"[Folder Server] ERROR: An unexpected error occurred during installation of {package_name}.")
+        print(e)
+
+required_packages = {
+    "watchdog": ">=3.0.0",
+    "Pillow": ">=9.0.0",
+    "moviepy": ">=1.0.3",
+    "trimesh": ">=3.9.0", # Requires numpy, etc. implicitly
+    "aiofiles": ">=23.1.0" # Recommended
+}
+
+for package, version in required_packages.items():
+    if importlib.util.find_spec(package.split('[')[0]) is None: # Handle extras like 'trimesh[easy]' if needed
+        install_package(package, version)
+    # else: # Optional: Check version if already installed
+    #    pass
+
 
 # --- Module Imports (after potential installs) ---
 try:
